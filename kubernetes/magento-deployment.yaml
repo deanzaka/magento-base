@@ -36,7 +36,7 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: deanzaka/magento-base:2.0.0
+      - image: deanzaka/magento-base:latest
         name: magento
         resources:
           requests:

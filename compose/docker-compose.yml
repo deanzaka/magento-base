@@ -15,7 +15,7 @@ services:
       MYSQL_PASSWORD: magento
   
   magento:
-    image: deanzaka/magento-base:2.0.0
+    image: deanzaka/magento-base:latest
     volumes:
       - ./magento_data:/var/www/html/magento2
       - ./magento_config:/var/www/html/config
