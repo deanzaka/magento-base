@@ -56,7 +56,7 @@ CMD sudo service nginx start \
   && if [ ! -d "/var/www/html/magento2/bin" ]; \
     then echo -e "Composer project not found, please follow instruction at: \n\
 https://cloud.docker.com/u/deanzaka/repository/docker/deanzaka/magento-base"; fi \
-  && if [ ! -f "/var/www/html/magento2/config/magento" ]; \
+  && if [ ! -f "/var/www/html/config/magento" ]; \
     then echo -e "nginx config file not found, please follow instruction at: \n\
 https://cloud.docker.com/u/deanzaka/repository/docker/deanzaka/magento-base"; \
     else \
