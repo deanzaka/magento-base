@@ -1,0 +1,6 @@
+resources:
+- volume-claim.yaml
+- mysql-deployment.yaml
+- redis-deployment.yaml
+- magento-deployment.yaml
+- autoscaler.yaml

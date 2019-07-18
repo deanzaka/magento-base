@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: magento-redis
+  labels:
+    app: magento
+spec:
+  ports:
+    - port: 6379
+  selector:
+    app: magento
+    tier: redis
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: magento-redis
+  labels:
+    app: magento
+spec:
+  selector:
+    matchLabels:
+      app: magento
+      tier: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: magento
+        tier: redis
+    spec:
+      containers:
+      - image: redis:latest
+        name: redis
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 6379
+          name: redis
+        volumeMounts:
+        - name: redis-persistent-storage
+          mountPath: /data
+      volumes:
+      - name: redis-persistent-storage
+        persistentVolumeClaim:
+          claimName: redis-pv-claim

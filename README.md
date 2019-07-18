@@ -12,7 +12,7 @@ Set up a dev environment with Magento and DB running on docker with docker compo
 version: '3.3'
 
 services:
-  db:
+  magento-mysql:
     image: mysql:5.7
     ports:
       - "3306:3306"
@@ -24,14 +24,23 @@ services:
       MYSQL_DATABASE: magento
       MYSQL_USER: magento
       MYSQL_PASSWORD: magento
+  
   magento:
     image: deanzaka/magento-base:2.0.0
     volumes:
       - ./magento_data:/var/www/html/magento2
+      - ./magento_config:/var/www/html/config
     ports:
       - "80:80"
-      - "443:443"
     restart: always
+  
+  magento-redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./redis_data:/data
 ```
 If you run it for the first time it will say:
 
@@ -61,14 +70,14 @@ After the downloads complete. Start your Magento installation by getting inside 
 
 ```
 docker exec -it {CONTAINER_ID} /bin/bash
-cd magento2
+cd /var/www/html/magento2
 find var generated vendor pub/static pub/media app/etc -type f -exec chmod g+w {} +
 find var generated vendor pub/static pub/media app/etc -type d -exec chmod g+ws {} +
 sudo chown -R :www-data . # Ubuntu
 chmod u+x bin/magento
 ```
 
-still inside the container, run the installation. Don't forget to change [YOUR_DB_HOST] to your db host. If you are using deployed docker db from provided compose file, then your db host will be `db`.
+still inside the container, run the installation. Don't forget to change [YOUR_DB_HOST] to your db host. If you are using deployed docker db from provided compose file, then your db host will be `magento-mysql`.
 ```
 DB_HOST=[YOUR_DB_HOST]
 php bin/magento setup:install \
@@ -131,6 +140,58 @@ Verify that the syntax is correct:
 sudo nginx -t
 ```
 
+## Use redis for caching and session storage
+To use redis as for caching and session storage, open magento env setup
+```
+nano /var/www/html/magento2/app/etc/env.php
+```
+Replace cache and session with to snippet codes below
+```
+'session' => [
+  'save' => 'magento-redis',
+  'redis' => [
+    'host' => 'magento-redis',
+    'port' => '6379',
+    'password' => '',
+    'timeout' => '2.5',
+    'persistent_identifier' => '',
+    'database' => '2',
+    'compression_threshold' => '2048',
+    'compression_library' => 'gzip',
+    'log_level' => '1',
+    'max_concurrency' => '6',
+    'break_after_frontend' => '5',
+    'break_after_adminhtml' => '30',
+    'first_lifetime' => '600',
+    'bot_first_lifetime' => '60',
+    'bot_lifetime' => '7200',
+    'disable_locking' => '0',
+    'min_lifetime' => '60',
+    'max_lifetime' => '2592000'
+  ]
+],
+'cache' => [
+  'frontend' => [
+    'default' => [
+      'backend' => 'Cm_Cache_Backend_Redis',
+      'backend_options' => [
+        'server' => magento-redis,
+        'database' => '0',
+        'port' => '6379'
+      ]
+    ],
+    'page_cache' => [
+      'backend' => 'Cm_Cache_Backend_Redis',
+      'backend_options' => [
+        'server' => magento-redis,
+        'port' => '6379',
+        'database' => '1',
+        'compress_data' => '0'
+      ]
+    ]
+  ]
+],
+```
 Restart nginx
 ```
 sudo service nginx restart

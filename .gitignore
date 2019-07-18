@@ -1,0 +1,5 @@
+# docker compose volume data
+db_data
+magento_config
+magento_data
+redis_data

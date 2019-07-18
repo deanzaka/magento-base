@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: magento
+  labels:
+    app: magento
+spec:
+  selector:
+    app: magento
+    tier: frontend
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 80
+    protocol: TCP
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: magento
+  labels:
+    app: magento
+spec:
+  selector:
+    matchLabels:
+      app: magento
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: magento
+        tier: frontend
+    spec:
+      containers:
+      - image: deanzaka/magento-base:2.0.0
+        name: magento
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 80
+          name: magento
+        volumeMounts:
+        - name: magento-persistent-storage
+          mountPath: /var/www/html/magento2
+        - name: magento-config-storage
+          mountPath: /var/www/html/config
+      volumes:
+      - name: magento-persistent-storage
+        persistentVolumeClaim:
+          claimName: mg-pv-claim
+      - name: magento-config-storage
+        persistentVolumeClaim:
+          claimName: cfg-pv-claim
